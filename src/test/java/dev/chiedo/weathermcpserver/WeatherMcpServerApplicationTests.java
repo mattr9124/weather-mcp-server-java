@@ -19,7 +19,7 @@ class WeatherMcpServerApplicationTests {
 	}
 
 	@Test
-	void getWeatherDetailsByLocationReturnsLiveData() {
+	void getWeatherDetailsByLocationReturnsLiveData() throws Exception {
 		String location = "Nairobi";
 
 		WeatherDataResponse response = weatherService.getWeatherDetailsByLocation(location);

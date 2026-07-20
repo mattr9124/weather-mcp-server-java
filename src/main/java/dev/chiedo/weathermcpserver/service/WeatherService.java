@@ -3,6 +3,8 @@ package dev.chiedo.weathermcpserver.service;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,11 +18,12 @@ import org.springframework.web.util.UriUtils;
 public class WeatherService {
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
 
-    public WeatherService(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder
+    public WeatherService(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+        this.restClient = RestClient.builder()
                 .baseUrl("https://wttr.in/")
-                .defaultHeader("Accept", "application/geo+json")
                 .defaultHeader("User-Agent", "WeatherApiClient/1.0")
                 .build();
     }
@@ -46,14 +49,16 @@ public class WeatherService {
     ) {}
 
     @Tool(description = "Get weather details for a specific location")
-    public WeatherDataResponse getWeatherDetailsByLocation(String location) {
+    public WeatherDataResponse getWeatherDetailsByLocation(String location) throws Exception {
         String encodedLocation = UriUtils.encode(location, StandardCharsets.UTF_8);
         String url = encodedLocation + "?format=j1";
 
-        WeatherApiResponse apiResponse = restClient.get()
+        String json = restClient.get()
                 .uri(url)
                 .retrieve()
-                .body(WeatherApiResponse.class);
+                .body(String.class);
+
+        WeatherApiResponse apiResponse = objectMapper.readValue(json, WeatherApiResponse.class);
 
         CurrentWeatherCondition currentWeatherCondition = apiResponse.currentWeatherCondition().get(0);
         String weatherDescription = currentWeatherCondition.weatherDescription().get(0).value();
