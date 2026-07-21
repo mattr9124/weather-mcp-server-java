@@ -2,7 +2,10 @@ package dev.chiedo.weathermcpserver.service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -17,15 +20,13 @@ import org.springframework.web.util.UriUtils;
 @Service
 public class WeatherService {
 
+    private final static Logger LOGGER = LoggerFactory.getLogger(WeatherService.class);
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
-    public WeatherService(RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+    public WeatherService(RestClient restClient, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.restClient = restClientBuilder
-                .baseUrl("https://wttr.in/")
-                .defaultHeader("User-Agent", "WeatherApiClient/1.0")
-                .build();
+        this.restClient = restClient;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -62,6 +63,9 @@ public class WeatherService {
 
         CurrentWeatherCondition currentWeatherCondition = apiResponse.currentWeatherCondition().get(0);
         String weatherDescription = currentWeatherCondition.weatherDescription().get(0).value();
+
+        LOGGER.debug("Log request for location {}", location);
+        LOGGER.debug("Weather conditions: {}", Objects.toString(apiResponse));
 
         return new WeatherDataResponse(
                 location,

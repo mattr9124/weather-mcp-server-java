@@ -2,30 +2,27 @@ package dev.chiedo.weathermcpserver.service;
 
 import dev.chiedo.weathermcpserver.model.WeatherDataResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@RestClientTest(WeatherService.class)
 class WeatherServiceTest {
-
-    @Autowired
-    private WeatherService weatherService;
-
-    @Autowired
-    private MockRestServiceServer server;
 
     @Test
     void getWeatherDetailsByLocationWorks() {
-        String location = "Nairobi";
-        String encodedLocation = "Nairobi";
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl("https://wttr.in/");
 
-        String url = "https://wttr.in/" + encodedLocation + "?format=j1";
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        RestClient restClient = builder.build();
+        WeatherService weatherService = new WeatherService(restClient, new ObjectMapper());
+
+        String url = "https://wttr.in/Nairobi?format=j1";
 
         String sampleResponse = """
                 {
@@ -46,7 +43,7 @@ class WeatherServiceTest {
         server.expect(requestTo(url))
                 .andRespond(withSuccess(sampleResponse, MediaType.APPLICATION_JSON));
 
-        WeatherDataResponse response = weatherService.getWeatherDetailsByLocation(location);
+        WeatherDataResponse response = weatherService.getWeatherDetailsByLocation("Nairobi");
 
         assertThat(response.location()).isEqualTo("Nairobi");
         assertThat(response.tempCelsius()).isEqualTo("25");
@@ -54,6 +51,7 @@ class WeatherServiceTest {
         assertThat(response.humidity()).isEqualTo("51");
         assertThat(response.windSpeed()).isEqualTo("9");
         assertThat(response.weatherDescription()).isEqualTo("Partly cloudy");
+
+        server.verify();
     }
 }
-
