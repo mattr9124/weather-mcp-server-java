@@ -20,9 +20,9 @@ public class WeatherService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
-    public WeatherService(ObjectMapper objectMapper) {
+    public WeatherService(RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.restClient = RestClient.builder()
+        this.restClient = restClientBuilder
                 .baseUrl("https://wttr.in/")
                 .defaultHeader("User-Agent", "WeatherApiClient/1.0")
                 .build();
@@ -49,7 +49,7 @@ public class WeatherService {
     ) {}
 
     @Tool(description = "Get weather details for a specific location")
-    public WeatherDataResponse getWeatherDetailsByLocation(String location) throws Exception {
+    public WeatherDataResponse getWeatherDetailsByLocation(String location) {
         String encodedLocation = UriUtils.encode(location, StandardCharsets.UTF_8);
         String url = encodedLocation + "?format=j1";
 
